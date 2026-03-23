@@ -1,17 +1,21 @@
 package hei.school.td3_http_responses.controller;
 
 import hei.school.td3_http_responses.entity.StudentEntity;
+import hei.school.td3_http_responses.service.StudentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 public class StudentController {
 
-    private final List<StudentEntity> studentList = new ArrayList<>();
+    private final StudentService studentService;
+
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
+    }
 
     @GetMapping("/hello-world")
     public ResponseEntity<String> helloWorld() {
@@ -25,16 +29,15 @@ public class StudentController {
     @GetMapping("/welcome")
     public ResponseEntity<String> welcome(@RequestParam(required = false) String name) {
         if (name == null || name.isEmpty()) {
-            return new ResponseEntity<>("Le paramètre 'name' est requis.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("le paramètre est requis.", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>("Bienvenue, " + name + " !", HttpStatus.OK);
+        return new ResponseEntity<>("Welcome, " + name + " !", HttpStatus.OK);
     }
 
     @PostMapping("/students")
     public ResponseEntity<List<StudentEntity>> addStudents(@RequestBody List<StudentEntity> students) {
         try {
-            studentList.addAll(students);
-            return new ResponseEntity<>(students, HttpStatus.CREATED);
+            return new ResponseEntity<>(studentService.addStudents(students), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -43,23 +46,23 @@ public class StudentController {
     @GetMapping("/students")
     public ResponseEntity<?> getStudents(@RequestHeader(required = false) String accept) {
         if (accept == null || accept.isEmpty()) {
-            return new ResponseEntity<>("L'en-tête 'Accept' est requis.", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("l'en-tête est requis.", HttpStatus.BAD_REQUEST);
         }
 
         try {
             if (accept.equals("application/json")) {
-                return new ResponseEntity<>(studentList, HttpStatus.OK);
+                return new ResponseEntity<>(studentService.getStudents(), HttpStatus.OK);
             }
 
             if (accept.equals("text/plain")) {
                 StringBuilder body = new StringBuilder();
-                for (StudentEntity s : studentList) {
+                for (StudentEntity s : studentService.getStudents()) {
                     body.append(s.toString()).append("\n");
                 }
                 return new ResponseEntity<>(body.toString(), HttpStatus.OK);
             }
 
-            return new ResponseEntity<>("Type 'Accept' non supporté : " + accept, HttpStatus.NOT_IMPLEMENTED);
+            return new ResponseEntity<>("type non supporté : " + accept, HttpStatus.NOT_IMPLEMENTED);
 
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
